@@ -1,0 +1,5 @@
+#!/bin/sh
+
+echo '*** iptables does not work in docker containers ***'
+exit 0
+

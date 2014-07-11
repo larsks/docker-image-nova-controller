@@ -1,0 +1,6 @@
+#!/bin/sh
+
+mkdir log
+ln -s ../nova-common/run
+ln -s ../../nova-common/log/run log/run
+

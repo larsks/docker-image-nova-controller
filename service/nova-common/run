@@ -1,0 +1,5 @@
+#!/bin/sh
+
+svcname=${PWD##*/}
+exec runuser -u nova -g nova $svcname
+

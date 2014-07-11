@@ -1,0 +1,11 @@
+#!/bin/sh
+
+svcname=${PWD}
+svcname=${svcname%/log}
+svcname=${svcname##*/}
+
+logdir=/srv/nova-controller/log/$svcname
+
+mkdir -p $logdir
+exec svlogd -tt $logdir
+

@@ -77,6 +77,10 @@ RUN crudini --set /etc/nova/nova.conf \
 	http://keystone:5000/
 RUN crudini --set /etc/nova/nova.conf \
 	keystone_authtoken \
+	identity_uri \
+	http://keystone:35357/
+RUN crudini --set /etc/nova/nova.conf \
+	keystone_authtoken \
 	admin_user \
 	nova
 RUN crudini --set /etc/nova/nova.conf \
@@ -87,8 +91,13 @@ RUN crudini --set /etc/nova/nova.conf \
 	keystone_authtoken \
 	admin_tenant_name \
 	services
+RUN crudini --set /etc/nova/nova.conf \
+	glance \
+	host \
+	glance
 
-ADD nova.sudoers /etc/sudoers.d
+ADD nova.sudoers /etc/sudoers.d/nova
+RUN chmod 440 /etc/sudoers.d/nova
 
 RUN useradd -r -d /srv/nova-controller -m nova
 
@@ -96,4 +105,11 @@ VOLUME /srv/nova-controller
 EXPOSE 8773
 EXPOSE 8774
 EXPOSE 8775
+
+RUN mv /usr/sbin/iptables /usr/sbin/iptables.orig
+RUN mv /usr/sbin/xtables-multi /usr/sbin/xtables-multi.orig
+ADD iptables-dummy /usr/sbin/iptables
+ADD iptables-dummy /usr/sbin/xtables-multi
+
+ADD nova-db-sync /etc/runit/sysinit/nova-db-sync
 
