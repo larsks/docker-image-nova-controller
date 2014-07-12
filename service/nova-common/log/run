@@ -7,5 +7,5 @@ svcname=${svcname##*/}
 logdir=/srv/nova-controller/log/$svcname
 
 mkdir -p $logdir
-exec svlogd -tt $logdir
+exec svlogd $logdir
 
