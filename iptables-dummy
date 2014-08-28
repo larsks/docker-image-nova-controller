@@ -1,0 +1,7 @@
+#!/bin/sh
+
+echo "*** iptables is disabled in this container"
+echo "*** called as: $0 $*"
+
+exit 0
+
