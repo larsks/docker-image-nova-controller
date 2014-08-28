@@ -1,5 +1,0 @@
-#!/bin/sh
-
-chown -R nova:nova /srv/nova-controller
-runuser -u nova -g nova nova-manage db sync
-

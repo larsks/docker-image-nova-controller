@@ -1,0 +1,30 @@
+#!/bin/sh
+
+: ${NOVA_DB_USER:=nova}
+: ${NOVA_DB_PASS:=secret}
+: ${NOVA_DB_NAME:=nova}
+: ${NOVA_DB_HOST:=mysql}
+: ${NOVA_KEYSTONE_PASS:=secret}
+
+crudini --set /etc/nova/nova.conf \
+	keystone_authtoken \
+	admin_password \
+	${NOVA_KEYSTONE_PASS}
+
+# configure database credentials
+if [ "$NOVA_DB_URI" ]; then
+	crudini --set /etc/nova/nova.conf \
+		database \
+		connection \
+		"$NOVA_DB_URI"
+else
+	crudini --set /etc/nova/nova.conf \
+		database \
+		connection \
+		mysql://${NOVA_DB_USER}:${NOVA_DB_PASS}@${NOVA_DB_HOST}/${NOVA_DB_NAME}
+fi
+
+
+chown -R nova:nova /srv/nova-controller
+runuser -u nova -g nova nova-manage db sync
+

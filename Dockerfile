@@ -1,5 +1,5 @@
-FROM larsks/runit
-MAINTAINER lars@oddbit.com
+FROM larsks/runit:fedora20
+MAINTAINER Lars Kellogg-Stedman <lars@oddbit.com>
 
 RUN yum -y install \
 	python-pbr \
@@ -26,90 +26,30 @@ WORKDIR /opt
 RUN git clone http://github.com/openstack/nova.git
 WORKDIR /opt/nova
 RUN python setup.py install
+RUN yum -y install \
+	python-fixtures \
+	python-mox
 RUN bash tools/config/generate_sample.sh -b . -p nova -o etc/nova
 
 # Install the sample configuration files.
 RUN mkdir -p /etc/nova
 
-RUN cp etc/nova/nova.conf.sample /etc/nova/nova.conf
-RUN cp etc/nova/api-paste.ini /etc/nova/
-RUN cp etc/nova/policy.json /etc/nova/
-RUN cp etc/nova/rootwrap.conf /etc/nova
-RUN cp -r etc/nova/rootwrap.d /etc/nova
+ADD install-config.sh /opt/nova/install-config.sh
+RUN sh /opt/nova/install-config.sh
 
-
-RUN crudini --del /etc/nova/nova.conf \
-	DEFAULT \
-	log_file
-RUN crudini --set /etc/nova/nova.conf \
-	DEFAULT \
-	verbose \
-	true
-RUN crudini --set /etc/nova/nova.conf \
-	DEFAULT \
-	rpc_backend \
-	rabbit
-RUN crudini --set /etc/nova/nova.conf \
-	DEFAULT \
-	rabbit_host \
-	amqphost
-RUN crudini --set /etc/nova/nova.conf \
-	DEFAULT \
-	state_path \
-	/srv/nova-controller
-RUN crudini --set /etc/nova/nova.conf \
-	database \
-	connection \
-	sqlite:////srv/nova-controller/nova.db
-
-RUN crudini --del /etc/nova/nova.conf \
-	keystone_authtoken \
-	auth_host
-RUN crudini --del /etc/nova/nova.conf \
-	keystone_authtoken \
-	auth_port
-RUN crudini --del /etc/nova/nova.conf \
-	keystone_authtoken \
-	auth_protocol
-RUN crudini --set /etc/nova/nova.conf \
-	keystone_authtoken \
-	auth_uri \
-	http://keystone:5000/
-RUN crudini --set /etc/nova/nova.conf \
-	keystone_authtoken \
-	identity_uri \
-	http://keystone:35357/
-RUN crudini --set /etc/nova/nova.conf \
-	keystone_authtoken \
-	admin_user \
-	nova
-RUN crudini --set /etc/nova/nova.conf \
-	keystone_authtoken \
-	admin_password \
-	secret
-RUN crudini --set /etc/nova/nova.conf \
-	keystone_authtoken \
-	admin_tenant_name \
-	services
-RUN crudini --set /etc/nova/nova.conf \
-	glance \
-	host \
-	glance
+ADD configure-nova.sh /opt/nova/configure-nova.sh
+RUN sh /opt/nova/configure-nova.sh
 
 ADD nova.sudoers /etc/sudoers.d/nova
 RUN chmod 440 /etc/sudoers.d/nova
 
 RUN useradd -r -d /srv/nova-controller -m nova
+ADD service/ /service/
 
 VOLUME /srv/nova-controller
 EXPOSE 8773
 EXPOSE 8774
 EXPOSE 8775
 
-RUN mv /usr/sbin/iptables /usr/sbin/iptables.orig
-RUN mv /usr/sbin/xtables-multi /usr/sbin/xtables-multi.orig
-ADD iptables-dummy /usr/sbin/iptables
-ADD iptables-dummy /usr/sbin/xtables-multi
-
-ADD nova-db-sync /etc/runit/sysinit/nova-db-sync
+ADD nova.sysinit /etc/runit/sysinit/nova
 
